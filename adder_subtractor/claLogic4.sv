@@ -15,7 +15,9 @@
 //-----------------------------------------------------------------------------
 
 // claLogic4.sv
-// 4-bit carry-look-ahead logic
+// 4-bit Carry Look-Ahead Logic (total of 16 gates, several with fan-in higher than 2)
+// cin -> cout: 4 gate-delays (but with "higher than 2" fan-in requirements)
+// r-bit CLA Logic: r(r + 1) / 2 + r = (r^2 + r + 2r) / 2 = r(r + 3)/ 2 (+ 2 gates if cout is needed)
 
 module claLogic4
 (
@@ -28,17 +30,17 @@ module claLogic4
     output logic cout
 );
 
-assign ci[1] = (cin & pi[0]) | gi[0];
-assign ci[2] = (cin & pi[0] & pi[1]) | 
+assign ci[1] = (cin & pi[0]) | gi[0]; // 2 gates
+assign ci[2] = (cin & pi[0] & pi[1]) |  // 3 gates
 (gi[0] & pi[1]) | gi[1];
-assign ci[3] = (cin & pi[0] & pi[1] & pi[2]) | 
+assign ci[3] = (cin & pi[0] & pi[1] & pi[2]) | // 4 gates
 (gi[0] & pi[1] & pi[2]) |
 (gi[1] & pi[2]) | gi[2];
 
-assign p = pi[0] & pi[1] & pi[2] & pi[3];
-assign g = (gi[0] & pi[1] & pi[2] & pi[3]) |
+assign p = pi[0] & pi[1] & pi[2] & pi[3]; // 1 gate
+assign g = (gi[0] & pi[1] & pi[2] & pi[3]) | // 4 gates
 (gi[1] & pi[2] & pi[3]) |
 (gi[2] & pi[3]) | 
 gi[3];
-assign cout = (cin & p) | g;
+assign cout = (cin & p) | g; // 2 gates
 endmodule

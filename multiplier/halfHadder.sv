@@ -15,7 +15,8 @@
 //-----------------------------------------------------------------------------
 
 // halfAdder.sv
-// sum = x ^ y; cout = (x & y)
+// sum = x ^ y = (x | y) & (!(x & y)); x,y -> sum: 5 gate-delays
+// cout = (x & y); x,y -> cout: 2 gate-delays
 
 module halfAdder
 (

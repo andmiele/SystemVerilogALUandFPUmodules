@@ -15,7 +15,15 @@
 //-----------------------------------------------------------------------------
 
 // fullAdder.sv
-// sum = x ^ y ^ cin; cout = (x & y) | (x & cin) | (y & cin)
+
+// Full Adder (9 gates total)
+// sum = x ^ y ^ cin; 
+// cout = (x & y) | (x & cin) | (y & cin)
+// Can be implemented with two HAs and one OR gate:
+// x,y -> sum: 10 gate-delays
+// x,y -> cout: 9 gate-delays
+// cin -> sum:  5 gate-delays
+// cin -> cout: 4 gate-delays
 
 module fullAdder
 (

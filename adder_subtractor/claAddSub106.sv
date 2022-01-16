@@ -15,13 +15,13 @@
 //-----------------------------------------------------------------------------
 
 // claAddSub106.sv
-//  adder-subtractor based 4-bit carry-look-ahead adder
+// 106-bit Adder-Subtractor based on 4-bit Carry Look-Ahead Adder-Subtractor
 
 module claAddSub106
 #(parameter M = 106)
 (
     input logic sub,
-    input logic cin,
+    input logic cin, // arithmetic carry ignored if sub is 1
     input logic [M -1 : 0] x,
     input logic [M - 1 : 0] y,
     output logic [M - 1 : 0] out,
@@ -40,7 +40,7 @@ logic [M - 1 : 0] yn;
 
 logic icout;
 
-assign ci[0] = cin ^ sub;
+assign ci[0] = sub | cin;
 assign yn = y ^ {M{sub}};
 
 localparam M2 = M / 2;

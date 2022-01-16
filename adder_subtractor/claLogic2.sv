@@ -15,7 +15,8 @@
 //-----------------------------------------------------------------------------
 
 // claLogic2.sv
-// 2-bit carry-look-ahead logic
+// 2-bit Carry Look-Ahead logic
+// r-bit CLA Logic: r(r + 1) / 2 + r = (r^2 + r + 2r) / 2 = r(r + 3)/ 2 (+ 2 gates if cout is needed)
 
 module claLogic2
 (
@@ -28,10 +29,10 @@ module claLogic2
     output logic cout
 );
 
-assign c1 = (cin & pi[0]) | gi[0];
+assign c1 = (cin & pi[0]) | gi[0]; // 2 gates
 
-assign p = pi[0] & pi[1];
-assign g = (gi[0] & pi[1]) | 
+assign p = pi[0] & pi[1]; // 1 gate
+assign g = (gi[0] & pi[1]) | // 2 gates
 gi[1];
-assign cout = (cin & p) | g;
+assign cout = (cin & p) | g; // 2 gates
 endmodule
