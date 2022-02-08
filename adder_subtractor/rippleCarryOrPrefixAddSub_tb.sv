@@ -14,13 +14,14 @@
 // limitations under the License.
 //-----------------------------------------------------------------------------
 
-// rippleCarryAddSubP_tb.sv
+// rippleCarryOrPrefixAddSub_tb.sv
 // Testbench: rippleCarryAddSubP (generic, M bits)
+// Testbench: prefixAddSub (generic, M bits)
 
 `timescale 1 ns / 10 ps
 
-module rippleAddSubP_tb;
-localparam M = 32; // 16, 24, 32, 48, 53, 64, 106 
+module rippleCarryOrPrefixAddSubP_tb;
+localparam M = 32;
 localparam step = M <= 10 ? 1 : {(M - 10){1'b1}};
 localparam I = {M{1'b1}};
 localparam J = {M{1'b1}};
@@ -39,9 +40,14 @@ logic sub;
 logic cin;
 
 
+prefixAddSub #(.M(M)) UUT(.sub(sub), .cin(cin), .x(x), .y(y), 
+    .out(out), .cout(cout), .v(v));
+
+/*
 rippleCarryAddSubP #(.M(M)) UUT(.sub(sub), .cin(cin), .x(x), .y(y), 
     .out(out), .cout(cout), .v(v),
 .p());
+*/
 
 reg [2 * M : 0] i;
 reg [2 * M : 0] j;
