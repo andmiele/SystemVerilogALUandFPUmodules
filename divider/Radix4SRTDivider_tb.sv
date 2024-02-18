@@ -45,7 +45,7 @@ logic clk;
 logic rst;
 
 
-Radix4SRTdivider #(N) UUT(.rst(rst), .clk(clk), .start(start), 
+Radix4SRTdivider #(.N(N)) UUT(.rst(rst), .clk(clk), .start(start), 
     .signedInput(signedInput), .x(x), .y(y), .q(q),
 .r(r), .done(done), .divByZeroEx(divByZeroEx));
 

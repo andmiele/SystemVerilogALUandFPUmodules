@@ -22,14 +22,14 @@
 
 // An M-bit Carry-Select Adder with R-bit Ripple Carry Adder blocks requires 2M - R Full Adders,
 // ceiling(M / R) - 1 Carry-Select logic blocks that each amount to 2 gates and M - R 2-to-1 multiplexers each requiring 4 gates 
-// for a total of 22M - 13R + 2*ceiling(M / R) - 2
+// for a total of 22M - 13R + 2 * ceiling(M / R) - 2
 
 // The delay is given by x[],y[] -> cout for the first block + ceiling(M / R) - 2 2 gate-delays for the Carry-Select logic blocks +
-// the delay for the last multiplexer = 9 + 4(R - 1) + 4*(ceiling(M / R) - 2) + 5 = 4R + 4*ceiling(M / R) + 2
+// the delay for the last multiplexer = 9 + 4(R - 1) + 4 * (ceiling(M / R) - 2) + 5 = 4R + 4 * ceiling(M / R) + 2
 
 // Taking the derivative of the delay function with respect to R and setting it equal to zero we can derive
-// the value of R that result in the optimal delay: r = sqrt(M)
-// Plugging that into the delay function gives the optimal delay: 8*sqrt(M) + 2
+// the value of R that result in the optimal delay: R = sqrt(M)
+// Plugging that into the delay function gives the optimal delay: 8 * sqrt(M) + 2
 // For example, if M = 16, we get R = 4 and a delay equal to 34 gate-delays
 // Similar to Carry-Skip Adders the delay can be further reduce by using Ripple Carry blocks of variable size: smaller at the beginning and at the end
 // and larger in the middle

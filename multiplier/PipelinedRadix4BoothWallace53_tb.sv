@@ -129,4 +129,5 @@ initial begin
             exp_s[counter % stages] <= es;
         end
     end
-    endmodule
+
+endmodule

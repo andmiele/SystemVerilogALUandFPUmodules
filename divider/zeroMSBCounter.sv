@@ -21,7 +21,7 @@ module zeroMSBCounter
 #(parameter N = 32)
 (  
     input logic [N - 1 : 0] x,
-    output logic [$size(N) : 0] out
+    output logic [$size(N) - 1 : 0] out
 );
 logic [N - 1 : 0] xi;
 logic [N - 1 : 0] caOut;
@@ -36,4 +36,3 @@ endgenerate
 combArbiter #(N) ca(.x(xi), .out(caOut));
 encoder #(N) enc(.x(caOut), .out(out));
 endmodule
-

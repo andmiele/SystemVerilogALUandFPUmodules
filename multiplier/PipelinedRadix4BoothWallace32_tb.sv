@@ -117,8 +117,8 @@ initial begin
 
     always
         #(period / 2) clk = !clk;
-    always_ff @(posedge clk)
 
+    always_ff @(posedge clk)
     begin: fifo
         if(!run)
             counter <= 0;
@@ -129,4 +129,5 @@ initial begin
             exp_s[counter % stages] <= es;
         end
     end
-    endmodule
+
+endmodule
