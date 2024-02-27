@@ -43,9 +43,9 @@ logic [N - 1 : 0] qnReg;
 logic [N - 1 : 0] yReg;
 logic [2 * N + 2 : 0] rxqReg;
 logic [$size(N) - 1 : 0] counter;
-logic ySign;
 logic [$size(N) - 1 : 0] shiftY;
 logic [$size(N) - 1 : 0] shiftYReg;
+logic [N - 1 : 0] xAbs;
 logic [N - 1 : 0] yAbs;
 logic [N + 2 : 0] cReg;
 logic [N + 2 : 0] ca, sa, cs, ss, ca2, sa2, cs2, ss2;
@@ -55,6 +55,9 @@ logic [7 : 0] r8;
 logic [2 * N + 2 : 0] rxVar;
 logic [N + 2 : 0] sum;
 logic q0, q1, qSign;
+
+logic oppositeSign;
+logic [N - 1 : 0] nonNegRemainder;
 
 // outputs
 assign q = rxqReg[N - 1 : 0];
@@ -66,6 +69,10 @@ assign sum = rxqReg[2 * N + 2 : N] + {cReg[N + 2 : 0]};
 assign r8 = rxqReg[2 * N : 2 * N - 7] + cReg[N : N - 7]; // need to sum 8 bits of carry-save registers with carry ripple to select q
 assign r6 = r8[7 : 2]; // last bit is sign
 assign yAbs = (y[N - 1] & signedInput) ? -y : y;
+assign xAbs = (x[N - 1] & signedInput) ? -x : x;
+
+assign nonNegRemainder = sum[N + 2] ? N'((sum + yReg) >> shiftYReg) : N'(sum >> shiftYReg);
+assign oppositeSign = signedInput & (x[N - 1] ^ y[N - 1]);
 
 zeroMSBCounter #(N) zmsb(.x(yAbs), .out(shiftY));
 // For odd N, last iteration shift by 1 only
@@ -91,9 +98,8 @@ assign qSign = r6[5] & (!({q1, q0} == 2'b00)); // Takes care of sign-magnitude 0
 // signed shift
 always_comb
 begin: signedShift
-    rxVar = x <<< shiftY;
+    rxVar = xAbs << shiftY;
 end
-
 
 always_ff @(posedge clk)
 begin: FSM
@@ -122,18 +128,34 @@ begin: FSM
             end
             START:
             begin
-                shiftYReg <= shiftY;
-                yReg      <= yAbs << shiftY;
-                ySign <= y[N - 1];
-                rxqReg  <=   rxVar;
-                if (y == {N{1'b0}})
+               if (y == 0)
                 begin
                     doneReg <= 1'b1;
                     divByZeroExReg <= 1'b1;
+                    shiftYReg <= 0;
+                    yReg <= 0;
+                    rxqReg <= 0;
                     state <= DONE;  
                 end
                 else
-                    state <= RUN;
+		begin
+		    if(yAbs == 1)
+		    begin
+                        doneReg <= 1'b1;
+                    	shiftYReg <= 0;
+                    	yReg <= 0;
+                    	rxqReg <=  oppositeSign ? N'(-xAbs) : xAbs;
+                    	state <= DONE;
+		    end
+		    else
+		    begin
+                    	shiftYReg <= shiftY;
+                    	yReg <= yAbs << shiftY;
+                    	rxqReg  <=   rxVar;
+                    	state <= RUN;
+		    end
+		end
+
             end
             DONE:
             begin
@@ -141,29 +163,18 @@ begin: FSM
             end
             RUN:
             begin
-                if (counter == N / 2 + N % 2)
+                if (counter == ((N / 2) + (N % 2)))
                 begin
-                    if(sum[N + 2])
-                    begin
-                        rxqReg[2 * N - 1 : N] <= N'((sum + yReg) >> shiftYReg);
-                    end
-                    else
-                    begin
-                        rxqReg[2 * N - 1 : N] <= N'(sum >> shiftYReg); 
-                    end  
-                    if(signedInput & ySign)
-                        rxqReg[N - 1 : 0] <= -(rxqReg[N - 1 : 0] - sum[N]);   
-                    else            
-                        rxqReg[N - 1 : 0] <= rxqReg[N - 1 : 0] - sum[N];   
-                    doneReg <= 1'b1;
+                    rxqReg[2 * N - 1 : N] <= nonNegRemainder >= yAbs ? nonNegRemainder - yAbs : nonNegRemainder;
+                    rxqReg[N - 1 : 0] <= oppositeSign ? sum[N + 2] - rxqReg[N - 1 : 0]  + (nonNegRemainder >= yAbs): rxqReg[N - 1 : 0] - sum[N + 2] + (nonNegRemainder >= yAbs);   
+                    
+		    doneReg <= 1'b1;
                     counter <= 0;    
                     state <= DONE;
                 end
                 else
-                if (counter == N / 2 && (N % 2) 
-                || (counter == 0 && (y == 1 && x[N - 1] && !(signedInput)))) 
-                // handle odd N (last iteration: shift by just 1) or 
-                // first remainder > 2/3 y (first iteration: shift by just 1)
+                if (counter == N / 2 && (N % 2)) 
+                // handle odd N (last iteration: shift by just 1)
                 begin
                     case ({qSign, q1, q0})
                         3'b000:

@@ -14,15 +14,15 @@
 // limitations under the License.
 //-----------------------------------------------------------------------------
 
-// Radix4SRTdivider_tb.sv
+// Radix4SRTDivider_tb.sv
 // testbench for generic integer radix-4 SRT divider
 
 `timescale 1 ns/ 10 ps
 
-module Radix4SRTdivider_tb;
+module Radix4SRTDivider_tb;
 
-localparam N = 32;
-localparam step = N <= 10 ? 1 : {(N - 8){1'b1}};
+localparam N = 9;
+localparam step = N <= 10 ? 1 : {(N - 7){1'b1}};
 localparam I = {N{1'b1}};
 localparam J = {N{1'b1}};
 localparam period = 10ns; // clock period for testbench
@@ -31,6 +31,8 @@ logic signed [N - 1 : 0] xs;
 logic signed [N - 1 : 0] ys;
 logic unsigned [N - 1 : 0] x;
 logic unsigned [N - 1 : 0] y;
+logic unsigned [N - 1 : 0] xa;
+logic unsigned [N - 1 : 0] ya;
 logic [N - 1 : 0] q;
 logic [N - 1 : 0] r;
 logic signed [N - 1 : 0] exp_q;
@@ -44,14 +46,12 @@ logic start;
 logic clk;
 logic rst;
 
-
-Radix4SRTdivider #(.N(N)) UUT(.rst(rst), .clk(clk), .start(start), 
+Radix4SRTDivider #(.N(N)) UUT(.rst(rst), .clk(clk), .start(start), 
     .signedInput(signedInput), .x(x), .y(y), .q(q),
 .r(r), .done(done), .divByZeroEx(divByZeroEx));
 
 reg [2 * N : 0] i;
 reg [2 * N : 0] j;
-
 
 initial 
 begin
@@ -79,7 +79,7 @@ begin
                 if(divByZeroEx != 1)
                 begin
                     passed = 1'b0;
-                    $display("UDIV TEST FAILED, DIV BY ZERO EXCEPTION NOT RAISED [i :%d, j :%d]\n x: %b y :%b\nq: %b\nr: %b \ndivByZeroEx: %b\n", i, j, x, y, 
+                    $display("UDIV TEST FAILED, DIV BY ZERO EXCEPTION NOT RAISED [i :%d, j :%d]\n x: %b y :%b\nq: %b\nr: %b\ndivByZeroEx: %b\n", i, j, x, y, 
                     q, r, divByZeroEx);
                 end
             end               
@@ -87,8 +87,8 @@ begin
             if ((q !== exp_q) || (r !== exp_r))
             begin
                 passed = 1'b0;
-                $display("UDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b \exp_q: %b\nr: %b \exp_r: %b\n", x, y, x, y, 
-                q, exp_q, r, exp_r);
+                $display("UDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b exp_q: %b\nr: %b exp_r: %b\ndivByZeroEx: %b", i, j, x, y, 
+                q, exp_q, r, exp_r, divByZeroEx);
                 $stop;
             end
         end
@@ -96,22 +96,37 @@ begin
     signedInput = 1'b1;
     for (i = 0; i <= I; i = i + step) 
     begin
-        xs = i;
+	x = i;
         for(j = 0; j <= J; j = j + step)
         begin
-            ys = j;
-            exp_q = x / y;
-            exp_r = x % y;
-            if(exp_r[N - 1] && !ys[N - 1])
+	    y = j;
+	    xs = $signed(x);
+            ys = $signed(y);
+	    xa = xs;
+	    ya = ys;	
+	    if(xs < 0)
+	    	xa = -xs;
+            if(ys < 0)
+	   	ya = -ys;
+            exp_q = xa / ya;
+            exp_r = xa % ya;
+        
+	    if(xs < 0)
             begin
-                exp_r = exp_r + ys;
-                exp_q = exp_q - 1;
-            end
-            if(exp_r[N - 1] && ys[N - 1])
+	    	if(ys > 0)
+	        begin
+			exp_q = -exp_q;
+	        end
+	    end
+            
+            if(ys < 0)
             begin
-                exp_r = exp_r - ys;
-                exp_q = exp_q + 1;
-            end
+		if(xs > 0)
+		begin
+			exp_q = -exp_q;
+		end
+	    end
+             
             rst = 1'b1;
             start = 1'b0;
             #period;
@@ -120,12 +135,12 @@ begin
             #period;
             wait(done)
             #period;
-            if (y == 0)     
+            if (ys == 0)     
             begin
                 if(divByZeroEx != 1)
                 begin
                     passed = 1'b0;
-                    $display("SDIV TEST FAILED, DIV BY ZERO EXCEPTION NOT RAISED [i :%d, j :%d]\n x: %b y :%b\nq: %b\nr: %b \ndivByZeroEx: %b\n", i, j, x, y, 
+                    $display("SDIV TEST FAILED, DIV BY ZERO EXCEPTION NOT RAISED [i :%d, j :%d]\n x: %b y :%b\nq: %b\nr: %b \ndivByZeroEx: %b\n", i, j, xs, ys, 
                     q, r, divByZeroEx);
                 end
             end               
@@ -134,8 +149,8 @@ begin
                 if ((q !== exp_q) || (r !== exp_r))
                 begin
                     passed = 1'b0;
-                    $display("SDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b \exp_q: %b\nr: %b \exp_r: %b\n", i, j, xs, ys, 
-                    q, exp_q, r, exp_r);
+                    $display("SDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b \exp_q: %b\nr: %b exp_r: %b\ndivByZeroEx: %b", i, j, UUT.oppositeSign, ys, 
+                    q, exp_q, r, exp_r, divByZeroEx);
                     $stop;
                 end
             end        

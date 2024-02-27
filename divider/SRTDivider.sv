@@ -42,9 +42,9 @@ logic [N - 1 : 0] qnReg;
 logic [N - 1 : 0] yReg;
 logic [2 * N + 1 : 0] rxqReg;
 logic [$size(N) : 0] counter;
-logic ySign;
 logic [$size(N) - 1 : 0] shiftY;
 logic [$size(N) - 1 : 0] shiftYReg;
+logic [N - 1 : 0] xAbs;
 logic [N - 1 : 0] yAbs;
 logic [N + 1 : 0] cReg;
 logic [N + 1: 0] ca;
@@ -55,8 +55,10 @@ logic [3 : 0] r4;
 logic [2 * N + 1 : 0] rxVar;
 logic [N : 0] sum;
 
+logic oppositeSigns;
+
 // outputs
-assign q = rxqReg[N - 1 : 0];
+assign q = signedInput & (x[N - 1] ^ y[N - 1]) ? -rxqReg[N - 1 : 0] : rxqReg[N - 1 : 0];
 assign r = rxqReg[2 * N - 1 : N];
 assign done = doneReg;
 assign divByZeroEx = divByZeroExReg;
@@ -64,6 +66,7 @@ assign divByZeroEx = divByZeroExReg;
 assign sum = rxqReg[2 * N : N] + {cReg[N : 0]};
 assign r4 = rxqReg[2 * N + 1 : 2 * N - 2] + cReg[N + 1  : N - 2];
 assign yAbs = (y[N - 1] & signedInput) ? -y : y;
+assign xAbs = (x[N - 1] & signedInput) ? -x : x;
 
 zeroMSBCounter #(N) zmsb(.x(yAbs), .out(shiftY));
 csAddSubGen #(N + 2) csadd(.sub(!r4[3]), .cin({cReg[N : 0], 1'b0}), .x(rxqReg[2 * N : N - 1]), .y({2'b00, yReg}), 
@@ -72,7 +75,7 @@ csAddSubGen #(N + 2) csadd(.sub(!r4[3]), .cin({cReg[N : 0], 1'b0}), .x(rxqReg[2 
 // signed shift
 always_comb
 begin: signedShift
-    rxVar = x <<< shiftY;
+    rxVar = xAbs <<< shiftY;
 end
 
 always_ff @(posedge clk)
@@ -104,7 +107,6 @@ begin: FSM
             begin
                 shiftYReg <= shiftY;
                 yReg      <= yAbs << shiftY;
-                ySign <= y[N - 1];
                 rxqReg  <=   rxVar;
                 if (y == {N{1'b0}})
                 begin
@@ -131,11 +133,9 @@ begin: FSM
                     begin
                         rxqReg[2 * N - 1 : N] <= N'(sum >> shiftYReg); 
                     end  
-                    if(signedInput & ySign)
-                        rxqReg[N - 1 : 0] <= -(rxqReg[N - 1 : 0] - sum[N]);   
-                    else            
-                        rxqReg[N - 1 : 0] <= rxqReg[N - 1 : 0] - sum[N];   
-                    doneReg <= 1'b1;
+                    rxqReg[N - 1 : 0] <= rxqReg[N - 1 : 0] - sum[N];   
+                    
+		    doneReg <= 1'b1;
                     counter <= 0;    
                     state <= DONE;
                 end

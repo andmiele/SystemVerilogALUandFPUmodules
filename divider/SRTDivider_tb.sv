@@ -20,7 +20,7 @@
 `timescale 1 ns/ 10 ps
 
 module SRTDivider_tb;
-localparam N = 8;
+localparam N = 16;
 
 localparam step = N <= 10 ? 1 : {(N - 3){1'b1}};
 localparam I = {N{1'b1}};
@@ -30,6 +30,8 @@ logic signed [N - 1 : 0] xs;
 logic signed [N - 1 : 0] ys;
 logic unsigned [N - 1 : 0] x;
 logic unsigned [N - 1 : 0] y;
+logic unsigned [N : 0] xa;
+logic unsigned [N : 0] ya;
 logic [N - 1 : 0] q;
 logic [N - 1 : 0] r;
 logic signed [N - 1 : 0] exp_q;
@@ -50,7 +52,6 @@ SRTDivider #(.N(N)) UUT(.rst(rst), .clk(clk), .start(start),
 
 reg [2 * N : 0] i;
 reg [2 * N : 0] j;
-
 
 initial begin
         clk = 1'b0;
@@ -85,7 +86,7 @@ initial begin
                         if ((q !== exp_q) || (r !== exp_r))
                         begin
                                 passed = 1'b0;
-                                $display("UDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b \exp_q: %b\nr: %b \exp_r: %b\n", x, y, x, y, 
+                                $display("UDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b \exp_q: %b\nr: %b \exp_r: %b\n", i, j, x, y, 
                                         q, exp_q, r, exp_r);
                                         $stop;
                         end
@@ -94,22 +95,36 @@ initial begin
         signedInput = 1'b1;
         for (integer i = 0; i <= I; i = i + step) 
         begin
-                xs = i;
+                x = i;
                 for (integer j = 0; j <= J; j = j + step)
                 begin
-                        ys = j;
-                        exp_q = x / y;
-                        exp_r = x % y;
-                        if(exp_r[N - 1] && !ys[N - 1])
+                        y = j;
+			xs = $signed(x);
+			ys = $signed(y);
+                        xa = xs;
+			ya = ys;
+			if(xs < 0)
+			   xa = -xs;
+                        if(ys < 0)
+			   ya = -ys;
+                        exp_q = xa / ya;
+                        exp_r = xa % ya;
+                        
+			if(xs < 0)
                         begin
-                        exp_r = exp_r + ys;
-                        exp_q = exp_q - 1;
-                        end
-                        if(exp_r[N - 1] && ys[N - 1])
+				if(ys > 0)
+				begin
+					exp_q = -exp_q;
+				end
+			end
+                        if(ys < 0)
                         begin
-                        exp_r = exp_r - ys;
-                        exp_q = exp_q + 1;
-                        end
+				if(xs > 0)
+				begin
+					exp_q = -exp_q;
+				end
+			end
+             
                         rst = 1'b1;
                         start = 1'b0;
                         #period;
@@ -131,7 +146,7 @@ initial begin
                         if ((q !== exp_q) || (r !== exp_r))
                         begin
                                 passed = 1'b0;
-                                $display("SDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b \exp_q: %b\nr: %b \exp_r: %b\n", i, j, xs, ys, 
+                                $display("SDIV TEST FAILED [i :%d, j :%d]\n x: %b y :%b\nq: %b \exp_q: %b\nr: %b \exp_r: %b\n", i, j, x, y, 
                                         q, exp_q, r, exp_r);
                                         $stop;
                         end
@@ -142,6 +157,8 @@ initial begin
         else
                 $display("DIV TEST FAILED!\n"); 
         $stop;
+end
+
 end
 
 always
