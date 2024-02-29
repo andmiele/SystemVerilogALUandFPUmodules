@@ -1,0 +1,72 @@
+#include <iostream>
+#include <random>
+#include <string>
+
+using namespace std;
+
+void floatToBin(float f, string& str) {
+  uint32_t* b = (uint32_t*)(&f);
+
+  str.clear();
+
+  for (int i = 31; i >= 0; i--) {
+    if (((*b) >> i) & 1)
+      str.push_back('1');
+    else
+      str.push_back('0');
+  }
+}
+
+int main() {
+  vector<float> a, b, c;
+  vector<string> desc;
+  unsigned N = 100000;
+
+  a.push_back(75454.0);
+  a.push_back(std::numeric_limits<float>::max());
+  a.push_back(std::numeric_limits<float>::denorm_min());
+  b.push_back(0.0000001);
+  b.push_back(std::numeric_limits<float>::min());
+  b.push_back(std::numeric_limits<float>::denorm_min());
+  desc.push_back("//num*num=num");
+  desc.push_back("//max*min=max");
+  desc.push_back("//denorm*denorm=denorm");
+  c.push_back(a[0] * b[0]);
+  c.push_back(a[1] * b[1]);
+  c.push_back(a[2] * b[2]);
+
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  static std::uniform_int_distribution<> dis(
+      0, std::numeric_limits<unsigned>::max());
+
+  for (int i = 0; i < N; i++) {
+    float aF = std::bit_cast<float>(dis(gen));
+    float bF = std::bit_cast<float>(dis(gen));
+    a.push_back(aF);
+    b.push_back(bF);
+    c.push_back(aF * bF);
+    desc.push_back("//randNum*randNum=randNum");
+  }
+
+  std::uniform_real_distribution<float> unif(0,
+                                             std::numeric_limits<float>::max());
+
+  for (int i = 0; i < N; i++) {
+    float aF = (unif(gen));
+    float bF = (unif(gen));
+    a.push_back(aF);
+    b.push_back(bF);
+    c.push_back(aF * bF);
+    desc.push_back("//randNum*randNum=randNum");
+  }
+
+  for (int i = 0; i < a.size(); i++) {
+    string aString, bString, cString;
+    floatToBin(a[i], aString);
+    floatToBin(b[i], bString);
+    floatToBin(c[i], cString);
+    cout << aString << "," << bString << "," << cString << "," << desc[i]
+         << "\n";
+  }
+}

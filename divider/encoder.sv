@@ -21,16 +21,16 @@ module encoder
 #(parameter N = 32)
 (
     input logic [N - 1 : 0] x,
-    output logic [$size(N) - 1 : 0] out
+    output logic [$clog2(N) - 1 : 0] out
 );
 
 always_comb
 begin
-    out = {$size(N){1'b0}};
+    out = {$clog2(N){1'b0}};
     for (int unsigned i = 0; i < N; i++)
     begin
         if (x[i])
-            out |= $size(N)'(i); // cast i to $clog2(N) width
+            out |= $clog2(N)'(i); // cast i to $clog2(N) width
     end
 end
 endmodule

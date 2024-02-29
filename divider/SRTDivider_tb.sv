@@ -22,7 +22,7 @@
 module SRTDivider_tb;
 localparam N = 16;
 
-localparam step = N <= 10 ? 1 : {(N - 3){1'b1}};
+localparam step = N <= 16 ? 1 : {(N - 3){1'b1}};
 localparam I = {N{1'b1}};
 localparam J = {N{1'b1}};
 localparam period = 10ns; // clock period for testbench
@@ -157,8 +157,6 @@ initial begin
         else
                 $display("DIV TEST FAILED!\n"); 
         $stop;
-end
-
 end
 
 always
